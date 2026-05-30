@@ -209,17 +209,33 @@
         </div>
       </section>
 
-      <!-- ============ DMS → Decimal ============ -->
+      <!-- ============ DMS ⇄ Decimal ============ -->
       <section class="panel" aria-labelledby="dms-h">
-        <h2 id="dms-h">DMS → Decimal degrees</h2>
-        <p class="sub" style="margin-top:-0.4rem; margin-bottom:1rem;">
-          Enter a degrees-minutes-seconds reading with the parts
-          <strong>separated by a space</strong> — e.g. <code>90 00 00</code> → 90.000°.
-        </p>
+        <h2 id="dms-h">DMS ⇄ Decimal degrees</h2>
 
-        <div class="field">
+        <div class="seg" role="radiogroup" aria-label="DMS conversion direction">
+          <label>
+            <input type="radio" name="dmsdir" value="dms2dec" checked />
+            <span>DMS&nbsp;→&nbsp;Decimal</span>
+          </label>
+          <label>
+            <input type="radio" name="dmsdir" value="dec2dms" />
+            <span>Decimal&nbsp;→&nbsp;DMS</span>
+          </label>
+        </div>
+
+        <!-- DMS input -->
+        <div id="dms-in-group" class="field">
           <label for="dms-in">DMS reading</label>
           <input id="dms-in" type="text" inputmode="text" autocomplete="off" placeholder="90 00 00" />
+          <p class="sub">Parts <strong>separated by a space</strong> — e.g. <code>90 00 00</code> → 90.000°.</p>
+        </div>
+
+        <!-- Decimal input -->
+        <div id="dec-in-group" class="field" hidden>
+          <label for="dec-in">Decimal degrees</label>
+          <input id="dec-in" type="number" inputmode="decimal" step="any" placeholder="90.5" />
+          <p class="sub">e.g. <code>90.5</code> → 90° 30' 00.000".</p>
         </div>
 
         <div class="actions">
@@ -231,7 +247,7 @@
 
         <div id="dms-result" class="result" aria-live="polite">
           <div class="res-block">
-            <h3>Decimal degrees</h3>
+            <h3 id="dms-res-title">Decimal degrees</h3>
             <dl class="res-grid">
               <div class="res-row"><dt>Result</dt><dd id="r-dms">—</dd></div>
             </dl>
@@ -242,9 +258,9 @@
         </div>
 
         <p class="note">
-          <strong>Accepted:</strong> <code>90 00 00</code>, <code>25 14 30.5</code>,
-          <code>55 16</code> (seconds optional) or a plain decimal. A leading
-          minus or N/S/E/W letter sets the sign. Spaces, °, ' and " all work as separators.
+          <strong>DMS accepts:</strong> <code>90 00 00</code>, <code>25 14 30.5</code>,
+          <code>55 16</code> (seconds optional) or a plain decimal. A leading minus
+          or N/S/E/W letter sets the sign. Spaces, °, ' and " all work as separators.
         </p>
       </section>
     </div>
