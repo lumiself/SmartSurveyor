@@ -170,7 +170,7 @@
               sw.state === "installed" &&
               navigator.serviceWorker.controller
             ) {
-              showUpdateToast(reg);
+              showUpdatePrompt(reg);
             }
           });
         });
@@ -187,15 +187,14 @@
     });
   }
 
-  function showUpdateToast(reg) {
-    var toast = document.getElementById("update-toast");
+  function showUpdatePrompt(reg) {
     var btn = document.getElementById("reload-btn");
-    if (!toast || !btn) return;
-    toast.hidden = false;
-    // Use onclick (not addEventListener) so re-showing the toast never stacks
-    // duplicate handlers.
+    if (!btn) return;
+    btn.hidden = false; // reveal the header "Update ready · Refresh" button
+    // Use onclick (not addEventListener) so it never stacks duplicate handlers.
     btn.onclick = function () {
-      toast.hidden = true; // dismiss immediately for responsive feedback
+      btn.disabled = true; // immediate feedback; can't double-fire
+      btn.textContent = "Refreshing…";
       if (reg.waiting) {
         // Ask the waiting worker to activate; controllerchange then reloads.
         reg.waiting.postMessage("SKIP_WAITING");
