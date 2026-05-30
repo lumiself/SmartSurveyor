@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Coordinate Converter — SmartSurveyor</title>
-  <meta name="description" content="Convert between Lat/Long, DMS and UTM coordinates — offline." />
+  <meta name="description" content="Convert Nahrwan 1967 / UTM zone 39N ⇄ WGS84, plus DMS to decimal degrees — offline." />
   <meta name="theme-color" content="#1E2A33" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -13,6 +13,79 @@
   <link rel="apple-touch-icon" href="../../assets/icons/apple-touch-icon.png" />
   <link rel="manifest" href="../../manifest.webmanifest" />
   <link rel="stylesheet" href="../../assets/css/styles.css" />
+  <style>
+    /* ---- Coordinate Converter: tool-specific UI (uses shared theme tokens) ---- */
+    .cc { max-width: var(--maxw); margin: 0 auto; padding: clamp(1.4rem, 4vw, 2.4rem) clamp(1rem, 4vw, 2rem) clamp(3rem, 8vw, 5rem); }
+    .cc__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(0.9rem, 2vw, 1.4rem); }
+    @media (min-width: 880px) { .cc__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+
+    .panel {
+      background: linear-gradient(180deg, var(--slate-800), var(--slate-700));
+      border: 1px solid var(--slate-line);
+      border-radius: var(--radius);
+      padding: clamp(1rem, 3vw, 1.4rem);
+    }
+    .panel + .panel { margin-top: clamp(0.9rem, 2vw, 1.4rem); }
+    .panel h2 { font-size: 1.05rem; margin: 0 0 0.9rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .panel h2 .hint { font-size: 0.72rem; font-weight: 700; color: var(--text-faint); letter-spacing: 0.04em; text-transform: uppercase; }
+
+    .field { margin-bottom: 0.9rem; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-dim); margin-bottom: 0.35rem; letter-spacing: 0.02em; }
+    .field input[type="number"], .field input[type="text"] {
+      width: 100%; font: inherit; color: var(--text);
+      background: rgba(0,0,0,0.25); border: 1px solid var(--slate-line);
+      border-radius: 10px; padding: 0.6rem 0.7rem; min-height: 44px;
+      -webkit-appearance: none; appearance: none;
+    }
+    .field input::placeholder { color: var(--text-faint); }
+    .field input:focus-visible { outline: 3px solid var(--amber-300); outline-offset: 1px; border-color: var(--amber-400); }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .field .sub { font-size: 0.74rem; color: var(--text-faint); margin: 0.3rem 0 0; line-height: 1.4; }
+
+    /* segmented direction control */
+    .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; background: rgba(0,0,0,0.25); border: 1px solid var(--slate-line); border-radius: 12px; padding: 0.3rem; margin-bottom: 1rem; }
+    .seg label { position: relative; }
+    .seg input { position: absolute; opacity: 0; pointer-events: none; }
+    .seg span { display: flex; align-items: center; justify-content: center; text-align: center; min-height: 44px; padding: 0.4rem 0.6rem; border-radius: 9px; font-size: 0.82rem; font-weight: 700; color: var(--text-dim); cursor: pointer; line-height: 1.2; transition: background 0.15s, color 0.15s; }
+    .seg input:checked + span { background: linear-gradient(180deg, var(--amber-400), var(--amber-500)); color: #2a1a05; }
+    .seg input:focus-visible + span { outline: 3px solid var(--amber-300); outline-offset: 2px; }
+
+    .toggle { display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 700; font-size: 0.85rem; color: var(--text-dim); cursor: pointer; user-select: none; white-space: nowrap; }
+    .toggle input { width: 18px; height: 18px; accent-color: var(--amber-500); }
+    .field input:disabled { opacity: 0.45; cursor: not-allowed; }
+    .toggle input:disabled { cursor: not-allowed; }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
+
+    /* results */
+    .result { display: none; margin-top: 1.1rem; padding-top: 1rem; border-top: 1px solid var(--slate-line); }
+    .result.is-shown { display: block; }
+    .res-grid { display: grid; gap: 0.55rem; }
+    .res-row { display: grid; grid-template-columns: auto 1fr; gap: 0.4rem 0.9rem; align-items: baseline; }
+    .res-row dt { color: var(--text-faint); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
+    .res-row dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; word-break: break-word; }
+    .res-block { background: rgba(0,0,0,0.22); border: 1px solid var(--slate-line); border-radius: 12px; padding: 0.8rem 0.9rem; }
+    .res-block + .res-block { margin-top: 0.7rem; }
+    .res-block h3 { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--amber-300); margin: 0 0 0.6rem; }
+
+    .btn-copy { background: none; border: none; color: var(--amber-300); font: inherit; font-weight: 700; cursor: pointer; padding: 0; font-size: 0.78rem; }
+    .btn-copy:hover { color: var(--amber-400); }
+
+    .note { font-size: 0.82rem; color: var(--text-faint); line-height: 1.5; margin: 0.9rem 0 0; }
+    .note strong { color: var(--text-dim); }
+    .banner { display: none; border-radius: 10px; padding: 0.7rem 0.9rem; font-size: 0.88rem; margin-top: 1rem; }
+    .banner.is-shown { display: block; }
+    .banner--warn { background: rgba(242,168,61,0.12); border: 1px solid rgba(242,168,61,0.35); color: var(--amber-300); }
+    .banner--err { background: rgba(224,107,107,0.12); border: 1px solid rgba(224,107,107,0.4); color: #f0a3a3; }
+    .toast { position: fixed; left: 50%; bottom: calc(1.2rem + var(--safe-bottom)); transform: translateX(-50%) translateY(20px); background: var(--slate-700); border: 1px solid var(--amber-400); color: var(--text); padding: 0.6rem 1rem; border-radius: 999px; font-weight: 700; font-size: 0.9rem; opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s; z-index: 200; }
+    .toast.is-shown { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .datum-card { background: rgba(0,0,0,0.18); border: 1px solid var(--slate-line); border-radius: 12px; padding: 0.8rem 0.9rem; margin-top: 1rem; font-size: 0.82rem; color: var(--text-dim); }
+    .datum-card dl { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 0.8rem; margin: 0; }
+    .datum-card dt { color: var(--text-faint); font-weight: 700; }
+    .datum-card dd { margin: 0; font-variant-numeric: tabular-nums; }
+  </style>
 </head>
 <body>
   <div class="topo" aria-hidden="true"></div>
@@ -27,18 +100,157 @@
     </nav>
   </header>
 
-  <main class="hero">
-    <div class="hero__inner">
-      <p class="eyebrow"><span class="dot is-offline" aria-hidden="true"></span> Coordinate Converter</p>
-      <h1 class="hero__title">Lat/Long ⇄ UTM ⇄ DMS</h1>
-      <p class="hero__lede">
-        This tool is scaffolded and ready to be built. Drop the converter UI and
-        logic into this page — it already loads the shared theme and is wired
-        into the offline cache and the manifest.
-      </p>
-      <a class="btn btn--primary" href="../../#tools">&larr; Back to all tools</a>
+  <main class="cc">
+    <p class="eyebrow"><span class="dot is-offline" aria-hidden="true"></span> Coordinate Converter</p>
+    <h1 class="hero__title" style="font-size: clamp(1.8rem, 6vw, 3rem);">Nahrwan 1967 ⇄ WGS84</h1>
+    <p class="hero__lede" style="margin-bottom: 1.4rem;">
+      Convert between <strong>Nahrwan 1967 / UTM zone 39N</strong> (EPSG:27039) grid
+      coordinates and WGS84 latitude/longitude for the UAE and Arabian Gulf. Uses a
+      3-parameter Helmert shift on the Clarke 1880 (RGS) ellipsoid — works fully offline.
+    </p>
+
+    <div class="cc__grid">
+      <!-- ============ Nahrwan ⇄ WGS84 ============ -->
+      <section class="panel" aria-labelledby="conv-h">
+        <h2 id="conv-h">Datum &amp; grid converter</h2>
+
+        <div class="seg" role="radiogroup" aria-label="Conversion direction">
+          <label>
+            <input type="radio" name="dir" value="utm2wgs" checked />
+            <span>Nahrwan UTM&nbsp;→&nbsp;WGS84</span>
+          </label>
+          <label>
+            <input type="radio" name="dir" value="wgs2utm" />
+            <span>WGS84&nbsp;→&nbsp;Nahrwan UTM</span>
+          </label>
+        </div>
+
+        <!-- UTM inputs -->
+        <div id="utm-inputs">
+          <div class="field-row">
+            <div class="field">
+              <label for="easting">Easting (m)</label>
+              <input id="easting" type="number" inputmode="decimal" step="any" placeholder="362000" />
+            </div>
+            <div class="field">
+              <label for="northing">Northing (m)</label>
+              <input id="northing" type="number" inputmode="decimal" step="any" placeholder="2767000" />
+            </div>
+          </div>
+          <p class="sub">Nahrwan 1967 / UTM (Clarke 1880 RGS). Set the zone below.</p>
+        </div>
+
+        <!-- WGS84 inputs -->
+        <div id="wgs-inputs" hidden>
+          <div class="field-row">
+            <div class="field">
+              <label for="wlat">Latitude (°)</label>
+              <input id="wlat" type="number" inputmode="decimal" step="any" placeholder="25.0000" />
+            </div>
+            <div class="field">
+              <label for="wlon">Longitude (°)</label>
+              <input id="wlon" type="number" inputmode="decimal" step="any" placeholder="55.0000" />
+            </div>
+          </div>
+          <p class="sub">Decimal degrees, WGS84. South / West are negative.</p>
+        </div>
+
+        <!-- UTM zone (shared by both directions) -->
+        <div class="field" style="margin-top: 0.9rem;">
+          <label for="zone-num">UTM zone (N)</label>
+          <div class="field-row" style="grid-template-columns: 1fr auto; align-items: center;">
+            <input id="zone-num" type="number" inputmode="numeric" min="1" max="60" step="1" value="39" />
+            <label class="toggle"><input id="zone-auto" type="checkbox" checked /> Auto</label>
+          </div>
+          <p class="sub" id="zone-sub">Auto-detects the zone (39N or 40N) from the longitude.</p>
+        </div>
+
+        <div class="actions">
+          <button id="convert-btn" class="btn btn--primary" type="button">Convert</button>
+          <button id="clear-btn" class="btn btn--ghost btn--small" type="button">Clear</button>
+        </div>
+
+        <div id="conv-banner" class="banner banner--err" role="alert"></div>
+
+        <!-- results -->
+        <div id="conv-result" class="result" aria-live="polite">
+          <div class="res-block">
+            <h3>WGS84</h3>
+            <dl class="res-grid">
+              <div class="res-row"><dt>Decimal</dt><dd id="r-wgs-dec">—</dd></div>
+              <div class="res-row"><dt>DMS</dt><dd id="r-wgs-dms">—</dd></div>
+            </dl>
+          </div>
+          <div class="res-block">
+            <h3>Nahrwan 1967</h3>
+            <dl class="res-grid">
+              <div class="res-row"><dt>UTM 39N</dt><dd id="r-utm">—</dd></div>
+              <div class="res-row"><dt>Geographic</dt><dd id="r-nah-dec">—</dd></div>
+            </dl>
+          </div>
+          <div class="actions">
+            <a id="maps-btn" class="btn btn--primary btn--small" href="#" target="_blank" rel="noopener">Open in Google Maps</a>
+            <button id="share-btn" class="btn btn--ghost btn--small" type="button">Share location</button>
+            <button id="copy-btn" class="btn btn--ghost btn--small" type="button">Copy WGS84</button>
+          </div>
+        </div>
+
+        <div class="datum-card">
+          <dl>
+            <dt>Datum</dt><dd>Nahrwan 1967 → WGS84 (UAE)</dd>
+            <dt>Ellipsoid</dt><dd>Clarke 1880 (RGS)</dd>
+            <dt>ΔX, ΔY, ΔZ</dt><dd>−249, −156, +381 m</dd>
+          </dl>
+        </div>
+      </section>
+
+      <!-- ============ DMS → Decimal ============ -->
+      <section class="panel" aria-labelledby="dms-h">
+        <h2 id="dms-h">DMS → Decimal degrees</h2>
+        <p class="sub" style="margin-top:-0.4rem; margin-bottom:1rem;">
+          Enter degrees, minutes and seconds <strong>separated by a space</strong>.
+          Add a hemisphere letter (N/S/E/W) or a leading minus for the sign.
+        </p>
+
+        <div class="field">
+          <label for="dms-lat">Latitude — e.g. <code>25 14 30.5 N</code></label>
+          <input id="dms-lat" type="text" inputmode="text" autocomplete="off" placeholder="25 14 30.5 N" />
+        </div>
+        <div class="field">
+          <label for="dms-lon">Longitude — e.g. <code>55 16 48 E</code></label>
+          <input id="dms-lon" type="text" inputmode="text" autocomplete="off" placeholder="55 16 48 E" />
+        </div>
+
+        <div class="actions">
+          <button id="dms-btn" class="btn btn--primary" type="button">Convert</button>
+          <button id="dms-clear" class="btn btn--ghost btn--small" type="button">Clear</button>
+        </div>
+
+        <div id="dms-banner" class="banner banner--err" role="alert"></div>
+
+        <div id="dms-result" class="result" aria-live="polite">
+          <div class="res-block">
+            <h3>Decimal degrees</h3>
+            <dl class="res-grid">
+              <div class="res-row"><dt>Latitude</dt><dd id="r-dms-lat">—</dd></div>
+              <div class="res-row"><dt>Longitude</dt><dd id="r-dms-lon">—</dd></div>
+            </dl>
+          </div>
+          <div class="actions">
+            <a id="dms-maps-btn" class="btn btn--primary btn--small" href="#" target="_blank" rel="noopener">Open in Google Maps</a>
+            <button id="dms-copy" class="btn btn--ghost btn--small" type="button">Copy</button>
+          </div>
+        </div>
+
+        <p class="note">
+          <strong>Accepted formats:</strong> <code>25 14 30.5 N</code>, <code>-25 14 30.5</code>,
+          <code>55 16</code> (seconds optional) or just <code>25.2418</code>. Spaces, °, ' and " all work as separators.
+        </p>
+      </section>
     </div>
   </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script>
     // Keep each tool offline-capable: register the shared SW from the root scope.
@@ -46,5 +258,6 @@
       navigator.serviceWorker.register("../../sw.js").catch(function () {});
     }
   </script>
+  <script src="coordinate-converter.js"></script>
 </body>
 </html>
