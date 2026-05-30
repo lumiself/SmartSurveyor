@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SmartSurveyor benchmark marker">
+  <defs>
+    <linearGradient id="amber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F2A83D"/>
+      <stop offset="1" stop-color="#E0821E"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#amber)"/>
+  <g fill="none" stroke="#F2A83D" stroke-width="14" opacity="0.45">
+    <circle cx="256" cy="256" r="170"/>
+    <circle cx="256" cy="256" r="205"/>
+  </g>
+  <g stroke="#1E2A33" stroke-width="28" stroke-linecap="round">
+    <line x1="256" y1="78" x2="256" y2="434"/>
+    <line x1="78" y1="256" x2="434" y2="256"/>
+  </g>
+  <circle cx="256" cy="256" r="110" fill="none" stroke="#1E2A33" stroke-width="28"/>
+  <circle cx="256" cy="256" r="34" fill="#F7F3EA"/>
+</svg>

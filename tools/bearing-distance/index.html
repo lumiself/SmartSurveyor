@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Bearing &amp; Distance — SmartSurveyor</title>
+  <meta name="description" content="Compute bearing and distance between points, or project a new point — offline." />
+  <meta name="theme-color" content="#1E2A33" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Bearing & Distance" />
+  <link rel="icon" href="../../assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="../../assets/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="../../manifest.webmanifest" />
+  <link rel="stylesheet" href="../../assets/css/styles.css" />
+</head>
+<body>
+  <div class="topo" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="../../" aria-label="Back to SmartSurveyor home">
+      <img class="brand__mark" src="../../assets/icons/icon.svg" width="36" height="36" alt="" />
+      <span class="brand__name">Smart<strong>Surveyor</strong></span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="../../#tools">&larr; All tools</a>
+    </nav>
+  </header>
+
+  <main class="hero">
+    <div class="hero__inner">
+      <p class="eyebrow"><span class="dot is-offline" aria-hidden="true"></span> Bearing &amp; Distance</p>
+      <h1 class="hero__title">Inverse &amp; forward computations</h1>
+      <p class="hero__lede">
+        This tool is scaffolded and ready to be built. Drop the bearing/distance
+        UI and logic into this page — it already loads the shared theme and is
+        wired into the offline cache and the manifest.
+      </p>
+      <a class="btn btn--primary" href="../../#tools">&larr; Back to all tools</a>
+    </div>
+  </main>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("../../sw.js").catch(function () {});
+    }
+  </script>
+</body>
+</html>
