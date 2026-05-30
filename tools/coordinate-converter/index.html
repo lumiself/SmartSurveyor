@@ -167,6 +167,9 @@
 
         <div class="actions">
           <button id="convert-btn" class="btn btn--primary" type="button">Convert</button>
+          <button id="loc-btn" class="btn btn--ghost btn--small" type="button">
+            <span id="loc-btn-label">Use current location</span>
+          </button>
           <button id="clear-btn" class="btn btn--ghost btn--small" type="button">Clear</button>
         </div>
 
@@ -208,17 +211,13 @@
       <section class="panel" aria-labelledby="dms-h">
         <h2 id="dms-h">DMS → Decimal degrees</h2>
         <p class="sub" style="margin-top:-0.4rem; margin-bottom:1rem;">
-          Enter degrees, minutes and seconds <strong>separated by a space</strong>.
-          Add a hemisphere letter (N/S/E/W) or a leading minus for the sign.
+          Enter a degrees-minutes-seconds reading with the parts
+          <strong>separated by a space</strong> — e.g. <code>90 00 00</code> → 90.000°.
         </p>
 
         <div class="field">
-          <label for="dms-lat">Latitude — e.g. <code>25 14 30.5 N</code></label>
-          <input id="dms-lat" type="text" inputmode="text" autocomplete="off" placeholder="25 14 30.5 N" />
-        </div>
-        <div class="field">
-          <label for="dms-lon">Longitude — e.g. <code>55 16 48 E</code></label>
-          <input id="dms-lon" type="text" inputmode="text" autocomplete="off" placeholder="55 16 48 E" />
+          <label for="dms-in">DMS reading</label>
+          <input id="dms-in" type="text" inputmode="text" autocomplete="off" placeholder="90 00 00" />
         </div>
 
         <div class="actions">
@@ -232,19 +231,18 @@
           <div class="res-block">
             <h3>Decimal degrees</h3>
             <dl class="res-grid">
-              <div class="res-row"><dt>Latitude</dt><dd id="r-dms-lat">—</dd></div>
-              <div class="res-row"><dt>Longitude</dt><dd id="r-dms-lon">—</dd></div>
+              <div class="res-row"><dt>Result</dt><dd id="r-dms">—</dd></div>
             </dl>
           </div>
           <div class="actions">
-            <a id="dms-maps-btn" class="btn btn--primary btn--small" href="#" target="_blank" rel="noopener">Open in Google Maps</a>
             <button id="dms-copy" class="btn btn--ghost btn--small" type="button">Copy</button>
           </div>
         </div>
 
         <p class="note">
-          <strong>Accepted formats:</strong> <code>25 14 30.5 N</code>, <code>-25 14 30.5</code>,
-          <code>55 16</code> (seconds optional) or just <code>25.2418</code>. Spaces, °, ' and " all work as separators.
+          <strong>Accepted:</strong> <code>90 00 00</code>, <code>25 14 30.5</code>,
+          <code>55 16</code> (seconds optional) or a plain decimal. A leading
+          minus or N/S/E/W letter sets the sign. Spaces, °, ' and " all work as separators.
         </p>
       </section>
     </div>
