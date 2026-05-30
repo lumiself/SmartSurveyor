@@ -36,7 +36,7 @@
 *::after { box-sizing: border-box; }
 
 /* The `hidden` attribute must always win, even over component display rules
-   like `.btn { display: inline-flex }` or `.toast { display: flex }`. */
+   like `.btn { display: inline-flex }`. */
 [hidden] { display: none !important; }
 
 html {
@@ -74,7 +74,7 @@ h1, h2, h3 { line-height: 1.15; margin: 0 0 0.4em; letter-spacing: -0.02em; }
 p { margin: 0 0 1em; }
 a { color: var(--amber-300); text-decoration: none; }
 
-img, svg { display: block; max-width: 100%; }
+img, svg { display: block; max-width: 100%; height: auto; }
 
 /* ----- topographic backdrop ----- */
 .topo {
@@ -412,9 +412,10 @@ a:focus-visible {
 .about__media { display: flex; justify-content: center; }
 .about__avatar {
   width: clamp(120px, 30vw, 180px);
-  aspect-ratio: 1;
+  height: clamp(120px, 30vw, 180px); /* explicit square; beats the height attr */
   border-radius: 20px;
   object-fit: cover;
+  object-position: center;
   background: var(--slate-600);
   border: 1px solid var(--slate-line);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
@@ -434,26 +435,6 @@ a:focus-visible {
 }
 .site-footer p { margin: 0.2em 0; }
 .muted { color: var(--text-faint); font-size: 0.9rem; }
-
-/* ======================= UPDATE TOAST ======================= */
-.toast {
-  position: fixed;
-  left: 50%;
-  bottom: calc(1rem + var(--safe-bottom));
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  background: var(--slate-700);
-  border: 1px solid var(--amber-400);
-  color: var(--text);
-  padding: 0.7rem 0.9rem 0.7rem 1.1rem;
-  border-radius: var(--radius);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-  z-index: 80;
-  max-width: calc(100vw - 2rem);
-  width: max-content;
-}
 
 /* ======================= RESPONSIVE ======================= */
 @media (max-width: 640px) {
