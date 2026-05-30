@@ -27,7 +27,11 @@
   const K0 = 0.9996;
   const FE = 500000; // false easting
   const FN = 0; // false northing (northern hemisphere)
-  const LON0 = 51 * Math.PI / 180; // central meridian of zone 39
+
+  // Central meridian of a UTM zone, in radians (zone 39 → 51°E, zone 40 → 57°E).
+  function cmRad(zone) { return (zone * 6 - 183) * D2R; }
+  // Standard UTM zone for a WGS84 longitude (UAE falls in 39 or 40).
+  function autoZone(lonDeg) { return Math.floor((lonDeg + 180) / 6) + 1; }
 
   // 3-parameter datum shift, Nahrwan 1967 → WGS84 (UAE)
   const DX = -249, DY = -156, DZ = 381;
@@ -73,7 +77,8 @@
   }
 
   // ---- geographic → UTM (Snyder transverse Mercator, forward) ---------------
-  function geoToUtm(latDeg, lonDeg, el) {
+  function geoToUtm(latDeg, lonDeg, el, zone) {
+    const LON0 = cmRad(zone);
     const lat = latDeg * D2R, lon = lonDeg * D2R;
     const e2 = el.e2, ep2 = el.ep2;
     const sin = Math.sin(lat), cos = Math.cos(lat), tan = Math.tan(lat);
@@ -98,7 +103,8 @@
   }
 
   // ---- UTM → geographic (Snyder transverse Mercator, inverse) ---------------
-  function utmToGeo(E, Nn, el) {
+  function utmToGeo(E, Nn, el, zone) {
+    const LON0 = cmRad(zone);
     const e2 = el.e2, ep2 = el.ep2;
     const M = (Nn - FN) / K0;
     const mu = M / (el.a * (1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 * e2 * e2 / 256));
@@ -132,19 +138,19 @@
   }
 
   // ---- full pipelines --------------------------------------------------------
-  function nahrwanUtmToWgs84(E, Nn) {
-    const nah = utmToGeo(E, Nn, CLARKE);
+  function nahrwanUtmToWgs84(E, Nn, zone) {
+    const nah = utmToGeo(E, Nn, CLARKE, zone);
     const ecef = geoToEcef(nah.lat, nah.lon, 0, CLARKE);
     ecef.x += DX; ecef.y += DY; ecef.z += DZ; // Nahrwan → WGS84
     const wgs = ecefToGeo(ecef, WGS84);
     return { wgs: wgs, nah: nah };
   }
 
-  function wgs84ToNahrwanUtm(latDeg, lonDeg) {
+  function wgs84ToNahrwanUtm(latDeg, lonDeg, zone) {
     const ecef = geoToEcef(latDeg, lonDeg, 0, WGS84);
     ecef.x -= DX; ecef.y -= DY; ecef.z -= DZ; // WGS84 → Nahrwan
     const nah = ecefToGeo(ecef, CLARKE);
-    const utm = geoToUtm(nah.lat, nah.lon, CLARKE);
+    const utm = geoToUtm(nah.lat, nah.lon, CLARKE, zone);
     return { utm: utm, nah: nah, wgs: { lat: latDeg, lon: lonDeg } };
   }
 
@@ -264,13 +270,34 @@
     const dir = currentDir();
     $("utm-inputs").hidden = dir !== "utm2wgs";
     $("wgs-inputs").hidden = dir !== "wgs2utm";
+    updateZoneUI();
+  }
+
+  // Keep the zone control in step with the direction and the Auto toggle.
+  function updateZoneUI() {
+    const dir = currentDir();
+    const auto = $("zone-auto");
+    const num = $("zone-num");
+    if (dir === "utm2wgs") {
+      // No longitude to detect from — the zone must be supplied.
+      auto.checked = false;
+      auto.disabled = true;
+      num.disabled = false;
+      $("zone-sub").textContent = "Zone is required to convert from UTM (39N or 40N for the UAE).";
+    } else {
+      auto.disabled = false;
+      num.disabled = auto.checked;
+      $("zone-sub").textContent = auto.checked
+        ? "Auto-detects the zone (39N or 40N) from the longitude."
+        : "Manual zone. The UAE uses 39N (west) or 40N (east of 54°E).";
+    }
   }
 
   function runConvert() {
     showBanner("conv-banner", "");
     $("conv-banner").className = "banner banner--err"; // reset to error styling
     const dir = currentDir();
-    let res, utmE, utmN;
+    let res, utmE, utmN, zone;
 
     if (dir === "utm2wgs") {
       utmE = parseFloat($("easting").value);
@@ -278,7 +305,11 @@
       if (!isFinite(utmE) || !isFinite(utmN)) {
         return showBanner("conv-banner", "Enter both Easting and Northing.");
       }
-      res = nahrwanUtmToWgs84(utmE, utmN);
+      zone = parseInt($("zone-num").value, 10);
+      if (!(zone >= 1 && zone <= 60)) {
+        return showBanner("conv-banner", "Enter a UTM zone between 1 and 60.");
+      }
+      res = nahrwanUtmToWgs84(utmE, utmN, zone);
     } else {
       const lat = parseFloat($("wlat").value);
       const lon = parseFloat($("wlon").value);
@@ -288,17 +319,29 @@
       if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
         return showBanner("conv-banner", "Latitude must be ±90° and longitude ±180°.");
       }
-      res = wgs84ToNahrwanUtm(lat, lon);
+      if ($("zone-auto").checked) {
+        zone = autoZone(lon);
+        $("zone-num").value = zone; // reflect the auto-picked zone back to the user
+      } else {
+        zone = parseInt($("zone-num").value, 10);
+        if (!(zone >= 1 && zone <= 60)) {
+          return showBanner("conv-banner", "Enter a UTM zone between 1 and 60.");
+        }
+      }
+      res = wgs84ToNahrwanUtm(lat, lon, zone);
       utmE = res.utm.E;
       utmN = res.utm.N;
     }
 
     lastWgs = res.wgs;
 
+    // Zones 37–40 over the UAE map to EPSG:27037–27040.
+    const epsg = (zone >= 37 && zone <= 40) ? " · EPSG:270" + zone : "";
+
     $("r-wgs-dec").textContent = fmt(res.wgs.lat, 8) + ", " + fmt(res.wgs.lon, 8);
     $("r-wgs-dms").textContent = toDms(res.wgs.lat, true) + "  " + toDms(res.wgs.lon, false);
     $("r-nah-dec").textContent = fmt(res.nah.lat, 8) + ", " + fmt(res.nah.lon, 8);
-    $("r-utm").textContent = "E " + fmt(utmE, 3) + "  N " + fmt(utmN, 3) + "  (zone 39N)";
+    $("r-utm").textContent = "E " + fmt(utmE, 3) + "  N " + fmt(utmN, 3) + "  (zone " + zone + "N" + epsg + ")";
 
     // Maps button reflects WGS84 result
     $("maps-btn").href = mapsUrl(res.wgs.lat, res.wgs.lon);
@@ -315,6 +358,9 @@
 
   function clearConvert() {
     ["easting", "northing", "wlat", "wlon"].forEach((id) => { $(id).value = ""; });
+    $("zone-num").value = "39";
+    if (!$("zone-auto").disabled) $("zone-auto").checked = true;
+    updateZoneUI();
     $("conv-result").classList.remove("is-shown");
     showBanner("conv-banner", "");
     lastWgs = null;
@@ -379,6 +425,8 @@
     r.addEventListener("change", () => { syncDirInputs(); showBanner("conv-banner", ""); })
   );
 
+  $("zone-auto").addEventListener("change", updateZoneUI);
+
   $("convert-btn").addEventListener("click", runConvert);
   $("clear-btn").addEventListener("click", clearConvert);
   $("maps-btn").addEventListener("click", (e) => {
@@ -400,7 +448,7 @@
   });
 
   // Enter key submits the relevant panel
-  ["easting", "northing", "wlat", "wlon"].forEach((id) =>
+  ["easting", "northing", "wlat", "wlon", "zone-num"].forEach((id) =>
     $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") runConvert(); })
   );
   ["dms-lat", "dms-lon"].forEach((id) =>

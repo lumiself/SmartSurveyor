@@ -51,6 +51,11 @@
     .seg input:checked + span { background: linear-gradient(180deg, var(--amber-400), var(--amber-500)); color: #2a1a05; }
     .seg input:focus-visible + span { outline: 3px solid var(--amber-300); outline-offset: 2px; }
 
+    .toggle { display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 700; font-size: 0.85rem; color: var(--text-dim); cursor: pointer; user-select: none; white-space: nowrap; }
+    .toggle input { width: 18px; height: 18px; accent-color: var(--amber-500); }
+    .field input:disabled { opacity: 0.45; cursor: not-allowed; }
+    .toggle input:disabled { cursor: not-allowed; }
+
     .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1rem; }
 
     /* results */
@@ -132,7 +137,7 @@
               <input id="northing" type="number" inputmode="decimal" step="any" placeholder="2767000" />
             </div>
           </div>
-          <p class="sub">Nahrwan 1967 / UTM zone 39N · central meridian 51°E.</p>
+          <p class="sub">Nahrwan 1967 / UTM (Clarke 1880 RGS). Set the zone below.</p>
         </div>
 
         <!-- WGS84 inputs -->
@@ -148,6 +153,16 @@
             </div>
           </div>
           <p class="sub">Decimal degrees, WGS84. South / West are negative.</p>
+        </div>
+
+        <!-- UTM zone (shared by both directions) -->
+        <div class="field" style="margin-top: 0.9rem;">
+          <label for="zone-num">UTM zone (N)</label>
+          <div class="field-row" style="grid-template-columns: 1fr auto; align-items: center;">
+            <input id="zone-num" type="number" inputmode="numeric" min="1" max="60" step="1" value="39" />
+            <label class="toggle"><input id="zone-auto" type="checkbox" checked /> Auto</label>
+          </div>
+          <p class="sub" id="zone-sub">Auto-detects the zone (39N or 40N) from the longitude.</p>
         </div>
 
         <div class="actions">
