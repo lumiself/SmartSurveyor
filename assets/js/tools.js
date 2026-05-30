@@ -14,6 +14,18 @@
  */
 window.SMARTSURVEYOR_TOOLS = [
   {
+    slug: "gnss-planner",
+    name: "GNSS Planner",
+    tagline: "Live satellites · sky plot · DOP",
+    description:
+      "Real orbital data propagated to right now: satellites in view, a polar sky plot and PDOP/HDOP/VDOP — plus your device's live fix accuracy. Check a benchmark before you set up the base.",
+    href: "tools/gnss-planner/",
+    status: "ready",
+    tags: ["gnss", "planning", "live"],
+    icon:
+      "M9 8h6v4H9z M2 9h5v6H2z M17 9h5v6h-5z M11.5 2h1v6h-1z M12 0.5a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z",
+  },
+  {
     slug: "coordinate-converter",
     name: "Coordinate Converter",
     tagline: "Lat/Long ⇄ UTM ⇄ DMS",

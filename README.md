@@ -94,9 +94,28 @@ python3 -m http.server 8000
 
 ## 📍 Roadmap
 
+- [x] **GNSS Planner** — live satellites in view, sky plot & DOP (real orbital
+  data) + live device fix accuracy
 - [x] Coordinate Converter (scaffolded)
 - [x] Bearing & Distance (scaffolded)
 - [ ] More tools — coming soon
+
+### 🛰 About the GNSS Planner
+
+The web's Geolocation API only exposes lat/lon/accuracy — never a satellite
+count — and Web Bluetooth/Serial don't work on iOS, so a browser can't read a
+receiver's *tracked* satellites on every device. Instead this tool does the
+standard GNSS mission-planning maths: it fetches live orbital elements (TLEs)
+from [CelesTrak](https://celestrak.org/) for GPS, GLONASS, Galileo and BeiDou,
+propagates every satellite to the current instant with SGP4
+([satellite.js](https://github.com/shashwatak/satellite-js)), and reports the
+satellites above your horizon, a polar sky plot and PDOP/HDOP/VDOP geometry.
+That's *predicted-in-view*, not receiver-locked — exactly what you want when
+deciding whether a benchmark is a good spot for a base. Alongside it, the live
+**device fix accuracy** (in metres, from the Geolocation API) gives a real
+on-site signal of current fix health. TLEs are cached on-device so it keeps
+working through a dropout, and the SGP4 engine is cached by the service worker
+after first load.
 
 ---
 
