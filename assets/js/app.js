@@ -192,9 +192,22 @@
     var btn = document.getElementById("reload-btn");
     if (!toast || !btn) return;
     toast.hidden = false;
-    btn.addEventListener("click", function () {
-      if (reg.waiting) reg.waiting.postMessage("SKIP_WAITING");
-    });
+    // Use onclick (not addEventListener) so re-showing the toast never stacks
+    // duplicate handlers.
+    btn.onclick = function () {
+      toast.hidden = true; // dismiss immediately for responsive feedback
+      if (reg.waiting) {
+        // Ask the waiting worker to activate; controllerchange then reloads.
+        reg.waiting.postMessage("SKIP_WAITING");
+        // Fallback: if controllerchange doesn't fire, reload anyway.
+        setTimeout(function () {
+          window.location.reload();
+        }, 1500);
+      } else {
+        // No waiting worker to swap in — just reload the page.
+        window.location.reload();
+      }
+    };
   }
 
   /* ----------------------------------------------------------- init */
