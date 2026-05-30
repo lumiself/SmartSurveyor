@@ -414,19 +414,10 @@ a:focus-visible {
   width: clamp(120px, 30vw, 180px);
   aspect-ratio: 1;
   border-radius: 20px;
-  display: grid;
-  place-items: center;
-  color: var(--text-faint);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  background:
-    repeating-linear-gradient(
-      45deg,
-      rgba(159, 176, 189, 0.06) 0 10px,
-      transparent 10px 20px
-    ),
-    var(--slate-600);
-  border: 1px dashed var(--slate-line);
+  object-fit: cover;
+  background: var(--slate-600);
+  border: 1px solid var(--slate-line);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
 }
 .about__role { color: var(--amber-300); font-weight: 700; margin-top: -0.4em; }
 .about__bio { color: var(--text-dim); max-width: 60ch; }
