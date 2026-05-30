@@ -413,24 +413,19 @@
       (pos) => {
         label.textContent = original;
         btn.disabled = false;
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        // Switch to WGS84 → Nahrwan, fill the fields, auto-detect the zone.
-        const wgs2utm = document.querySelector('input[name="dir"][value="wgs2utm"]');
-        wgs2utm.checked = true;
-        syncDirInputs();
-        $("wlat").value = lat.toFixed(8);
-        $("wlon").value = lon.toFixed(8);
+        // Populate the lat/lon fields so the user can review before converting.
+        $("wlat").value = pos.coords.latitude.toFixed(8);
+        $("wlon").value = pos.coords.longitude.toFixed(8);
         $("zone-auto").checked = true;
         updateZoneUI();
-        runConvert();
         toast("Located ±" + Math.round(pos.coords.accuracy) + " m");
+        $("wlat").focus();
       },
       (err) => {
         label.textContent = original;
         btn.disabled = false;
         const msg = err.code === err.PERMISSION_DENIED
-          ? "Location permission denied. Enable it to use your GPS position."
+          ? "Location permission denied. Enable it in your browser settings."
           : "Couldn't get a location fix. Try again outdoors.";
         showBanner("conv-banner", msg);
       },
