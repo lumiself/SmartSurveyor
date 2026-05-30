@@ -142,6 +142,11 @@
 
         <!-- WGS84 inputs -->
         <div id="wgs-inputs" hidden>
+          <div class="field" style="margin-bottom: 0.6rem;">
+            <button id="loc-btn" class="btn btn--ghost btn--small" type="button" style="width:100%;">
+              <span id="loc-btn-label">Use current location</span>
+            </button>
+          </div>
           <div class="field-row">
             <div class="field">
               <label for="wlat">Latitude (°)</label>
@@ -167,9 +172,6 @@
 
         <div class="actions">
           <button id="convert-btn" class="btn btn--primary" type="button">Convert</button>
-          <button id="loc-btn" class="btn btn--ghost btn--small" type="button">
-            <span id="loc-btn-label">Use current location</span>
-          </button>
           <button id="clear-btn" class="btn btn--ghost btn--small" type="button">Clear</button>
         </div>
 
