@@ -453,10 +453,11 @@ a:focus-visible {
   border: 1px solid var(--amber-400);
   color: var(--text);
   padding: 0.7rem 0.9rem 0.7rem 1.1rem;
-  border-radius: 999px;
+  border-radius: var(--radius);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
   z-index: 80;
   max-width: calc(100vw - 2rem);
+  width: max-content;
 }
 
 /* ======================= RESPONSIVE ======================= */
