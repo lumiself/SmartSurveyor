@@ -169,6 +169,20 @@
       s.toFixed(3).padStart(6, "0") + '"' + hemi;
   }
 
+  // Sign-aware DMS without a hemisphere letter (for the generic DMS panel).
+  function toDmsPlain(value) {
+    const sign = value < 0 ? "-" : "";
+    let v = Math.abs(value);
+    let d = Math.floor(v);
+    let mFull = (v - d) * 60;
+    let m = Math.floor(mFull);
+    let s = (mFull - m) * 60;
+    if (s >= 59.9995) { s = 0; m += 1; }
+    if (m >= 60) { m = 0; d += 1; }
+    return sign + d + "° " + String(m).padStart(2, "0") + "' " +
+      s.toFixed(3).padStart(6, "0") + '"';
+  }
+
   function fmt(n, dp) { return Number(n).toFixed(dp); }
 
   // ---- DMS parsing -----------------------------------------------------------
@@ -369,26 +383,52 @@
   // ---------------------------------------------------------------------------
   // DMS → decimal wiring (single reading, e.g. "90 00 00" → 90.000°)
   // ---------------------------------------------------------------------------
-  let lastDms = null;
+  let lastDms = null; // the result string, for the Copy button
+
+  function currentDmsDir() {
+    const c = document.querySelector('input[name="dmsdir"]:checked');
+    return c ? c.value : "dms2dec";
+  }
+
+  function syncDmsDir() {
+    const dir = currentDmsDir();
+    $("dms-in-group").hidden = dir !== "dms2dec";
+    $("dec-in-group").hidden = dir !== "dec2dms";
+    showBanner("dms-banner", "");
+  }
 
   function runDms() {
     showBanner("dms-banner", "");
-    const raw = $("dms-in").value;
-    if (!raw.trim()) {
-      return showBanner("dms-banner", "Enter a DMS reading, e.g. 90 00 00");
-    }
-    const dec = parseDms(raw);
-    if (!isFinite(dec)) {
-      return showBanner("dms-banner", "Couldn't read that. Try e.g. 90 00 00");
+    const dir = currentDmsDir();
+
+    if (dir === "dms2dec") {
+      const raw = $("dms-in").value;
+      if (!raw.trim()) {
+        return showBanner("dms-banner", "Enter a DMS reading, e.g. 90 00 00");
+      }
+      const dec = parseDms(raw);
+      if (!isFinite(dec)) {
+        return showBanner("dms-banner", "Couldn't read that. Try e.g. 90 00 00");
+      }
+      lastDms = fmt(dec, 6);
+      $("dms-res-title").textContent = "Decimal degrees";
+      $("r-dms").textContent = lastDms + "°";
+    } else {
+      const v = parseFloat($("dec-in").value);
+      if (!isFinite(v)) {
+        return showBanner("dms-banner", "Enter a decimal value, e.g. 90.5");
+      }
+      lastDms = toDmsPlain(v);
+      $("dms-res-title").textContent = "Degrees · minutes · seconds";
+      $("r-dms").textContent = lastDms;
     }
 
-    lastDms = dec;
-    $("r-dms").textContent = fmt(dec, 6) + "°";
     $("dms-result").classList.add("is-shown");
   }
 
   function clearDms() {
     $("dms-in").value = "";
+    $("dec-in").value = "";
     $("dms-result").classList.remove("is-shown");
     showBanner("dms-banner", "");
     lastDms = null;
@@ -455,17 +495,23 @@
     if (lastWgs) copyText(lastWgs.lat.toFixed(8) + ", " + lastWgs.lon.toFixed(8));
   });
 
+  document.querySelectorAll('input[name="dmsdir"]').forEach((r) =>
+    r.addEventListener("change", syncDmsDir)
+  );
   $("dms-btn").addEventListener("click", runDms);
   $("dms-clear").addEventListener("click", clearDms);
   $("dms-copy").addEventListener("click", () => {
-    if (lastDms != null) copyText(fmt(lastDms, 6));
+    if (lastDms != null) copyText(lastDms);
   });
 
   // Enter key submits the relevant panel
   ["easting", "northing", "wlat", "wlon", "zone-num"].forEach((id) =>
     $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") runConvert(); })
   );
-  $("dms-in").addEventListener("keydown", (e) => { if (e.key === "Enter") runDms(); });
+  ["dms-in", "dec-in"].forEach((id) =>
+    $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") runDms(); })
+  );
 
   syncDirInputs();
+  syncDmsDir();
 })();
