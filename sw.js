@@ -7,7 +7,7 @@
  *
  * Bump CACHE_VERSION whenever the shell changes to roll out an update.
  */
-const CACHE_VERSION = "v6";
+const CACHE_VERSION = "v7";
 const CACHE_NAME = `smartsurveyor-${CACHE_VERSION}`;
 
 // Cross-origin runtime deps we deliberately cache (cache-first) so a tool's
@@ -20,7 +20,9 @@ const RUNTIME_DEPS = [
   "https://unpkg.com/satellite.js@",
 ];
 
-// Core app shell — cached up-front so the landing page works fully offline.
+// Core app shell + all tool files — cached up-front so every page works fully
+// offline, and so that bumping CACHE_VERSION atomically replaces ALL files
+// (including tool JS) rather than leaving stale tool scripts in a lazy cache.
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -33,6 +35,11 @@ const CORE_ASSETS = [
   "./assets/icons/icon-512.png",
   "./assets/icons/apple-touch-icon.png",
   "./assets/img/creator.jpg",
+  "./tools/coordinate-converter/index.html",
+  "./tools/coordinate-converter/coordinate-converter.js",
+  "./tools/gnss-planner/index.html",
+  "./tools/gnss-planner/gnss-planner.js",
+  "./tools/bearing-distance/index.html",
 ];
 
 self.addEventListener("install", (event) => {
