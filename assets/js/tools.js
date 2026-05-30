@@ -28,11 +28,11 @@ window.SMARTSURVEYOR_TOOLS = [
   {
     slug: "coordinate-converter",
     name: "Coordinate Converter",
-    tagline: "Lat/Long ⇄ UTM ⇄ DMS",
+    tagline: "Nahrwan 1967 ⇄ WGS84 · DMS",
     description:
-      "Convert between decimal degrees, degrees-minutes-seconds and UTM grid coordinates. Built for quick field checks without a signal.",
+      "Convert Nahrwan 1967 / UTM zone 39N (EPSG:27039) grid coordinates to and from WGS84 lat/long, with a DMS to decimal helper and one-tap Google Maps. Built for UAE fieldwork, fully offline.",
     href: "tools/coordinate-converter/",
-    status: "soon",
+    status: "ready",
     tags: ["geodesy", "conversion"],
     icon:
       "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z",
