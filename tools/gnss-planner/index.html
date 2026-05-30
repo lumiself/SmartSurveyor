@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GNSS Planner — SmartSurveyor</title>
+  <meta name="description" content="Live satellites in view, sky plot and DOP from real orbital data — check a benchmark before you set up your base." />
+  <meta name="theme-color" content="#1E2A33" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="GNSS Planner" />
+  <link rel="icon" href="../../assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="../../assets/icons/apple-touch-icon.png" />
+  <link rel="manifest" href="../../manifest.webmanifest" />
+  <link rel="stylesheet" href="../../assets/css/styles.css" />
+  <style>
+    /* ---- GNSS Planner: tool-specific UI (uses shared theme tokens) ---- */
+    .gnss { max-width: var(--maxw); margin: 0 auto; padding: clamp(1.4rem, 4vw, 2.4rem) clamp(1rem, 4vw, 2rem) clamp(3rem, 8vw, 5rem); }
+    .gnss__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(0.9rem, 2vw, 1.4rem); }
+    @media (min-width: 880px) { .gnss__grid { grid-template-columns: 360px minmax(0, 1fr); align-items: start; } }
+
+    .panel {
+      background: linear-gradient(180deg, var(--slate-800), var(--slate-700));
+      border: 1px solid var(--slate-line);
+      border-radius: var(--radius);
+      padding: clamp(1rem, 3vw, 1.4rem);
+    }
+    .panel + .panel { margin-top: clamp(0.9rem, 2vw, 1.4rem); }
+    .panel h2 { font-size: 1.05rem; margin: 0 0 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
+    .panel h2 .hint { font-size: 0.72rem; font-weight: 700; color: var(--text-faint); letter-spacing: 0.04em; text-transform: uppercase; }
+
+    .field { margin-bottom: 0.9rem; }
+    .field:last-child { margin-bottom: 0; }
+    .field label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-dim); margin-bottom: 0.35rem; letter-spacing: 0.02em; }
+    .field input[type="number"], .field input[type="text"] {
+      width: 100%; font: inherit; color: var(--text);
+      background: rgba(0,0,0,0.25); border: 1px solid var(--slate-line);
+      border-radius: 10px; padding: 0.6rem 0.7rem; min-height: 44px;
+      -webkit-appearance: none; appearance: none;
+    }
+    .field input:focus-visible { outline: 3px solid var(--amber-300); outline-offset: 1px; border-color: var(--amber-400); }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+
+    .range-head { display: flex; align-items: baseline; justify-content: space-between; }
+    .range-head output { font-weight: 800; color: var(--amber-300); }
+    input[type="range"] { width: 100%; accent-color: var(--amber-500); height: 44px; }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.4rem; }
+
+    .toggle { display: inline-flex; align-items: center; gap: 0.55rem; font-weight: 600; color: var(--text-dim); cursor: pointer; user-select: none; }
+    .toggle input { width: 18px; height: 18px; accent-color: var(--amber-500); }
+
+    /* status line */
+    .status-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem; }
+    .status-line .sep { color: var(--text-faint); }
+    .pill { display: inline-flex; align-items: center; gap: 0.45rem; font-weight: 700; }
+
+    /* big stats */
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
+    @media (min-width: 560px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+    .stat { background: rgba(0,0,0,0.22); border: 1px solid var(--slate-line); border-radius: 12px; padding: 0.9rem 0.8rem; text-align: center; }
+    .stat__num { font-size: clamp(1.6rem, 6vw, 2.2rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+    .stat__label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); margin-top: 0.4rem; }
+    .stat__sub { font-size: 0.72rem; font-weight: 700; margin-top: 0.25rem; }
+    .q-excellent { color: #57c98a; } .q-good { color: #8fd66a; } .q-moderate { color: #f2c94c; }
+    .q-fair { color: #f2a83d; } .q-poor { color: #e06b6b; } .q-na { color: var(--text-faint); }
+
+    /* constellation chips */
+    .consts { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.9rem; }
+    .const-chip { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; font-weight: 700;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--slate-line); border-radius: 999px; padding: 0.3rem 0.7rem; cursor: pointer; }
+    .const-chip input { display: none; }
+    .const-chip .swatch { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+    .const-chip .cnt { color: var(--text-dim); font-variant-numeric: tabular-nums; }
+    .const-chip.is-off { opacity: 0.4; }
+
+    /* sky plot */
+    .sky-wrap { display: flex; justify-content: center; margin: 0.3rem 0 0.2rem; }
+    #sky { width: 100%; max-width: 440px; aspect-ratio: 1 / 1; touch-action: none; }
+    .legend { font-size: 0.8rem; color: var(--text-faint); text-align: center; margin-top: 0.4rem; }
+
+    /* satellite table */
+    .sat-table-wrap { max-height: 320px; overflow: auto; border: 1px solid var(--slate-line); border-radius: 10px; }
+    table.sat-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    table.sat-table th, table.sat-table td { padding: 0.45rem 0.7rem; text-align: left; white-space: nowrap; }
+    table.sat-table thead th { position: sticky; top: 0; background: var(--slate-700); color: var(--text-dim); font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; border-bottom: 1px solid var(--slate-line); }
+    table.sat-table tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+    table.sat-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .sat-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 0.45rem; vertical-align: -1px; }
+
+    /* live accuracy */
+    .acc { display: grid; grid-template-columns: auto 1fr; gap: 0.4rem 1rem; align-items: baseline; }
+    .acc dt { color: var(--text-faint); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; }
+    .acc dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .acc__big { font-size: clamp(1.6rem, 6vw, 2.1rem); font-weight: 800; line-height: 1; }
+
+    .note { font-size: 0.82rem; color: var(--text-faint); line-height: 1.5; margin: 0.9rem 0 0; }
+    .note strong { color: var(--text-dim); }
+    .banner { display: none; border-radius: 10px; padding: 0.7rem 0.9rem; font-size: 0.88rem; margin-bottom: 1rem; }
+    .banner.is-shown { display: block; }
+    .banner--warn { background: rgba(242,168,61,0.12); border: 1px solid rgba(242,168,61,0.35); color: var(--amber-300); }
+    .banner--err { background: rgba(224,107,107,0.12); border: 1px solid rgba(224,107,107,0.4); color: #f0a3a3; }
+    .spin { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.25); border-top-color: var(--amber-300); border-radius: 50%; display: inline-block; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="topo" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="../../" aria-label="Back to SmartSurveyor home">
+      <img class="brand__mark" src="../../assets/icons/icon.svg" width="36" height="36" alt="" />
+      <span class="brand__name">Smart<strong>Surveyor</strong></span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="../../#tools">&larr; All tools</a>
+    </nav>
+  </header>
+
+  <main class="gnss">
+    <p class="eyebrow"><span id="net-dot" class="dot" aria-hidden="true"></span> GNSS Planner</p>
+    <h1 class="hero__title" style="font-size: clamp(1.8rem, 6vw, 3rem);">Live satellites &amp; geometry</h1>
+    <p class="hero__lede" style="margin-bottom: 1.4rem;">
+      Real orbital data, propagated to right now: how many satellites are
+      overhead, the sky geometry (DOP), and your device's live fix accuracy —
+      so you know if a benchmark is good before you set up the base.
+    </p>
+
+    <div id="banner" class="banner" role="status" aria-live="polite"></div>
+
+    <div class="gnss__grid">
+      <!-- ============ controls column ============ -->
+      <div>
+        <section class="panel" aria-labelledby="loc-h">
+          <h2 id="loc-h">Position</h2>
+          <div class="field">
+            <div class="actions" style="margin-top:0;">
+              <button id="loc-btn" class="btn btn--primary btn--small" type="button">
+                <span id="loc-btn-label">Use my location</span>
+              </button>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="lat">Latitude (°)</label>
+              <input id="lat" type="number" inputmode="decimal" step="any" placeholder="-17.8252" />
+            </div>
+            <div class="field">
+              <label for="lon">Longitude (°)</label>
+              <input id="lon" type="number" inputmode="decimal" step="any" placeholder="31.0335" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="alt">Height above ellipsoid (m)</label>
+            <input id="alt" type="number" inputmode="decimal" step="any" placeholder="0" />
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="opt-h">
+          <h2 id="opt-h">Options</h2>
+          <div class="field">
+            <div class="range-head">
+              <label for="mask">Elevation mask</label>
+              <output id="mask-out" for="mask">10°</output>
+            </div>
+            <input id="mask" type="range" min="0" max="30" step="1" value="10" />
+            <p class="note" style="margin-top:0.4rem;">Raise the mask to simulate trees, buildings or terrain blocking the horizon.</p>
+          </div>
+          <div class="field">
+            <label class="toggle"><input id="auto" type="checkbox" checked /> Auto-update (live)</label>
+          </div>
+          <div class="actions">
+            <button id="refresh-btn" class="btn btn--ghost btn--small" type="button">Refresh orbital data</button>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="acc-h">
+          <h2 id="acc-h">Live fix accuracy <span class="hint">device</span></h2>
+          <dl class="acc">
+            <dt>Accuracy</dt>
+            <dd><span id="acc-big" class="acc__big q-na">—</span></dd>
+            <dt>Quality</dt>
+            <dd id="acc-q" class="q-na">Tap “Use my location”</dd>
+            <dt>Position</dt>
+            <dd id="acc-pos" style="font-weight:600; color:var(--text-dim);">—</dd>
+          </dl>
+          <p class="note">This is the <strong>browser's own accuracy estimate</strong> (the only GNSS figure the web exposes) — a real signal of current fix health, but not a satellite count.</p>
+        </section>
+      </div>
+
+      <!-- ============ results column ============ -->
+      <div>
+        <section class="panel" aria-labelledby="res-h">
+          <h2 id="res-h">Satellites in view <span class="hint" id="res-time">—</span></h2>
+          <div class="status-line">
+            <span class="pill"><span id="data-dot" class="dot is-offline" aria-hidden="true"></span><span id="data-status">No orbital data yet</span></span>
+            <span class="sep">·</span>
+            <span id="tle-age">—</span>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div id="s-sats" class="stat__num">—</div>
+              <div class="stat__label">In view</div>
+            </div>
+            <div class="stat">
+              <div id="s-pdop" class="stat__num q-na">—</div>
+              <div class="stat__label">PDOP</div>
+              <div id="s-pdop-q" class="stat__sub q-na">&nbsp;</div>
+            </div>
+            <div class="stat">
+              <div id="s-hdop" class="stat__num q-na">—</div>
+              <div class="stat__label">HDOP</div>
+              <div id="s-hdop-q" class="stat__sub q-na">&nbsp;</div>
+            </div>
+            <div class="stat">
+              <div id="s-vdop" class="stat__num q-na">—</div>
+              <div class="stat__label">VDOP</div>
+              <div id="s-vdop-q" class="stat__sub q-na">&nbsp;</div>
+            </div>
+          </div>
+
+          <div id="consts" class="consts" role="group" aria-label="Constellations"></div>
+        </section>
+
+        <section class="panel" aria-labelledby="sky-h">
+          <h2 id="sky-h">Sky plot</h2>
+          <div class="sky-wrap">
+            <canvas id="sky" role="img" aria-label="Polar sky plot of satellites by azimuth and elevation"></canvas>
+          </div>
+          <p class="legend">Centre = overhead (zenith) · edge = horizon · N at top. Shaded ring = below mask.</p>
+        </section>
+
+        <section class="panel" aria-labelledby="tab-h">
+          <h2 id="tab-h">Visible satellites <span class="hint" id="tab-count">0</span></h2>
+          <div class="sat-table-wrap">
+            <table class="sat-table">
+              <thead><tr><th>Satellite</th><th>System</th><th class="num">Az °</th><th class="num">El °</th></tr></thead>
+              <tbody id="sat-rows"><tr><td colspan="4" style="color:var(--text-faint);">No data yet.</td></tr></tbody>
+            </table>
+          </div>
+          <p class="note">
+            <strong>What this is:</strong> satellites whose real orbits place them above your horizon right now — i.e. <em>predicted in view</em>. It is not a live count of channels your receiver has locked. Orbital data (TLEs) is fetched live from CelesTrak and stays usable for ~1–2 weeks.
+          </p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Keep each tool offline-capable: register the shared SW from the root scope.
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("../../sw.js").catch(function () {});
+    }
+  </script>
+  <script src="gnss-planner.js"></script>
+</body>
+</html>

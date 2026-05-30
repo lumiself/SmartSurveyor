@@ -7,8 +7,18 @@
  *
  * Bump CACHE_VERSION whenever the shell changes to roll out an update.
  */
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 const CACHE_NAME = `smartsurveyor-${CACHE_VERSION}`;
+
+// Cross-origin runtime deps we deliberately cache (cache-first) so a tool's
+// compute engine keeps working offline after the first online load. These are
+// requested with `crossorigin="anonymous"`, so the responses are CORS (not
+// opaque) and safe to inspect/replay. We never cache the live GNSS data feeds
+// (CelesTrak) here — the app handles those, with its own freshness logic.
+const RUNTIME_DEPS = [
+  "https://cdn.jsdelivr.net/npm/satellite.js@",
+  "https://unpkg.com/satellite.js@",
+];
 
 // Core app shell — cached up-front so the landing page works fully offline.
 const CORE_ASSETS = [
@@ -59,7 +69,25 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
-  // Only handle same-origin requests; let the browser deal with the rest.
+
+  // Allowlisted cross-origin deps: cache-first so the engine loads offline.
+  if (RUNTIME_DEPS.some((prefix) => request.url.startsWith(prefix))) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).then((response) => {
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then((c) => c.put(request, copy));
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+
+  // Only handle remaining same-origin requests; let the browser deal with the rest.
   if (url.origin !== self.location.origin) return;
 
   // Navigations (and tool pages): network-first so fresh content wins, but
