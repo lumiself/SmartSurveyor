@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- viewport-fit=cover lets the page draw under the iOS notch/home indicator;
+       we then pad with env(safe-area-inset-*). maximum-scale is intentionally
+       NOT locked so users can still pinch-zoom (accessibility). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <title>SmartSurveyor — Offline Field Tools for Surveyors</title>
+  <meta name="description" content="A growing collection of fast, offline-first tools for land surveyors. Installs to your home screen and works on any device, no signal required." />
+
+  <!-- Theme / browser chrome colour -->
+  <meta name="theme-color" content="#1E2A33" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#E0821E" media="(prefers-color-scheme: light)" />
+  <meta name="color-scheme" content="dark light" />
+
+  <!-- iOS standalone / home-screen install -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="SmartSurveyor" />
+  <meta name="format-detection" content="telephone=no" />
+
+  <!-- Icons -->
+  <link rel="icon" href="assets/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+  <link rel="mask-icon" href="assets/icons/icon.svg" color="#E0821E" />
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="manifest.webmanifest" />
+
+  <!-- Social / LinkedIn share preview -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="SmartSurveyor — Offline Field Tools for Surveyors" />
+  <meta property="og:description" content="Fast, offline-first tools for land surveyors. Installs to your home screen, works on any device." />
+  <meta property="og:image" content="assets/icons/icon-512.png" />
+  <meta name="twitter:card" content="summary" />
+
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#tools">Skip to tools</a>
+
+  <!-- Decorative topographic contour backdrop -->
+  <div class="topo" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="SmartSurveyor home">
+      <img class="brand__mark" src="assets/icons/icon.svg" width="36" height="36" alt="" />
+      <span class="brand__name">Smart<strong>Surveyor</strong></span>
+    </a>
+    <nav class="site-nav" aria-label="Primary">
+      <a href="#tools">Tools</a>
+      <a href="#about">Creator</a>
+      <button id="install-btn" class="btn btn--ghost" hidden>Install app</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ============================ HERO ============================ -->
+    <section class="hero" id="top">
+      <div class="hero__inner">
+        <p class="eyebrow">
+          <span class="dot" id="net-dot" aria-hidden="true"></span>
+          <span id="net-label">Offline-ready field toolkit</span>
+        </p>
+        <h1 class="hero__title">
+          Surveying tools that work<br />
+          <span class="accent">where the signal doesn't.</span>
+        </h1>
+        <p class="hero__lede">
+          SmartSurveyor is a Progressive Web App — a single home for fast,
+          accurate field utilities. Install it once, then use every tool
+          completely offline, on any phone, tablet or laptop.
+        </p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" href="#tools">Browse the tools</a>
+          <button class="btn btn--ghost" id="install-btn-hero" hidden>Add to home screen</button>
+        </div>
+        <ul class="hero__badges" aria-label="Highlights">
+          <li>⛰ Works fully offline</li>
+          <li>📱 iOS &amp; Android ready</li>
+          <li>⚡ No accounts, no ads</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============================ TOOLS ============================ -->
+    <section class="tools" id="tools">
+      <div class="section-head">
+        <h2>The toolkit</h2>
+        <p>Tap any tool to open it. New tools are added regularly.</p>
+      </div>
+      <div class="tool-grid" id="tool-grid" role="list">
+        <!-- Tool cards are rendered from assets/js/tools.js -->
+      </div>
+    </section>
+
+    <!-- ============================ ABOUT ============================ -->
+    <section class="about" id="about">
+      <div class="about__card">
+        <div class="about__media">
+          <!-- Replace with a real headshot: assets/img/creator.jpg -->
+          <div class="about__avatar" aria-hidden="true">[ photo ]</div>
+        </div>
+        <div class="about__body">
+          <p class="eyebrow">About the creator</p>
+          <!-- TODO: replace the placeholders below with your real details -->
+          <h2>[ Your Name ]</h2>
+          <p class="about__role">[ Your role · e.g. Licensed Land Surveyor &amp; Developer ]</p>
+          <p class="about__bio">
+            [ A short bio goes here — 2–3 sentences. Talk about your surveying
+            background, why you built SmartSurveyor, and the problems it solves
+            in the field. This is what visitors from LinkedIn will read first. ]
+          </p>
+          <div class="about__links">
+            <!-- TODO: paste your real LinkedIn URL -->
+            <a class="btn btn--primary" href="https://www.linkedin.com/in/your-handle" target="_blank" rel="noopener">
+              <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.22.79 24 1.77 24h20.45c.98 0 1.78-.78 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>
+              Connect on LinkedIn
+            </a>
+            <a class="btn btn--ghost" href="mailto:your-email@example.com">Email me</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>
+      <strong>SmartSurveyor</strong> · Built as an offline-first PWA ·
+      <span id="year"></span>
+    </p>
+    <p class="muted">Open it once with a connection, then it's yours offline.</p>
+  </footer>
+
+  <!-- Update toast -->
+  <div class="toast" id="update-toast" hidden>
+    <span>A new version is available.</span>
+    <button class="btn btn--small" id="reload-btn">Refresh</button>
+  </div>
+
+  <script src="assets/js/tools.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
