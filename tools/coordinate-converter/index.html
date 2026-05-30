@@ -274,6 +274,8 @@
       navigator.serviceWorker.register("../../sw.js").catch(function () {});
     }
   </script>
-  <script src="coordinate-converter.js"></script>
+  <!-- Versioned URL: bump on each JS change so fresh HTML never pairs with a
+       stale cached script (the service worker keys cache entries by full URL). -->
+  <script src="coordinate-converter.js?v=6"></script>
 </body>
 </html>
