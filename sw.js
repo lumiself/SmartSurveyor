@@ -7,7 +7,7 @@
  *
  * Bump CACHE_VERSION whenever the shell changes to roll out an update.
  */
-const CACHE_VERSION = "v8";
+const CACHE_VERSION = "v9";
 const CACHE_NAME = `smartsurveyor-${CACHE_VERSION}`;
 
 // Cross-origin runtime deps we deliberately cache (cache-first) so a tool's
