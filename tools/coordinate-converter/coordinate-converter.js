@@ -367,55 +367,75 @@
   }
 
   // ---------------------------------------------------------------------------
-  // DMS → decimal wiring
+  // DMS → decimal wiring (single reading, e.g. "90 00 00" → 90.000°)
   // ---------------------------------------------------------------------------
   let lastDms = null;
 
   function runDms() {
     showBanner("dms-banner", "");
-    const latRaw = $("dms-lat").value;
-    const lonRaw = $("dms-lon").value;
-    const lat = parseDms(latRaw);
-    const lon = parseDms(lonRaw);
-
-    if (!isFinite(lat) && !isFinite(lon)) {
-      return showBanner("dms-banner", "Enter a latitude and/or longitude in DMS.");
+    const raw = $("dms-in").value;
+    if (!raw.trim()) {
+      return showBanner("dms-banner", "Enter a DMS reading, e.g. 90 00 00");
     }
-    if (latRaw.trim() && !isFinite(lat)) {
-      return showBanner("dms-banner", "Couldn't read the latitude. Use e.g. 25 14 30.5 N");
-    }
-    if (lonRaw.trim() && !isFinite(lon)) {
-      return showBanner("dms-banner", "Couldn't read the longitude. Use e.g. 55 16 48 E");
-    }
-    if (isFinite(lat) && (lat < -90 || lat > 90)) {
-      return showBanner("dms-banner", "Latitude must be within ±90°.");
-    }
-    if (isFinite(lon) && (lon < -180 || lon > 180)) {
-      return showBanner("dms-banner", "Longitude must be within ±180°.");
+    const dec = parseDms(raw);
+    if (!isFinite(dec)) {
+      return showBanner("dms-banner", "Couldn't read that. Try e.g. 90 00 00");
     }
 
-    $("r-dms-lat").textContent = isFinite(lat) ? fmt(lat, 8) + "°" : "—";
-    $("r-dms-lon").textContent = isFinite(lon) ? fmt(lon, 8) + "°" : "—";
-
-    const hasBoth = isFinite(lat) && isFinite(lon);
-    lastDms = hasBoth ? { lat: lat, lon: lon } : null;
-    const mapsBtn = $("dms-maps-btn");
-    if (hasBoth) {
-      mapsBtn.href = mapsUrl(lat, lon);
-      mapsBtn.removeAttribute("hidden");
-    } else {
-      mapsBtn.setAttribute("hidden", "");
-    }
-
+    lastDms = dec;
+    $("r-dms").textContent = fmt(dec, 6) + "°";
     $("dms-result").classList.add("is-shown");
   }
 
   function clearDms() {
-    $("dms-lat").value = "";
-    $("dms-lon").value = "";
+    $("dms-in").value = "";
     $("dms-result").classList.remove("is-shown");
     showBanner("dms-banner", "");
     lastDms = null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Use current GPS location → convert to Nahrwan
+  // ---------------------------------------------------------------------------
+  function useCurrentLocation() {
+    const btn = $("loc-btn");
+    const label = $("loc-btn-label");
+    if (!("geolocation" in navigator)) {
+      return showBanner("conv-banner", "This device can't share its location.");
+    }
+    showBanner("conv-banner", "");
+    $("conv-banner").className = "banner banner--err";
+    const original = label.textContent;
+    label.textContent = "Locating…";
+    btn.disabled = true;
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        label.textContent = original;
+        btn.disabled = false;
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        // Switch to WGS84 → Nahrwan, fill the fields, auto-detect the zone.
+        const wgs2utm = document.querySelector('input[name="dir"][value="wgs2utm"]');
+        wgs2utm.checked = true;
+        syncDirInputs();
+        $("wlat").value = lat.toFixed(8);
+        $("wlon").value = lon.toFixed(8);
+        $("zone-auto").checked = true;
+        updateZoneUI();
+        runConvert();
+        toast("Located ±" + Math.round(pos.coords.accuracy) + " m");
+      },
+      (err) => {
+        label.textContent = original;
+        btn.disabled = false;
+        const msg = err.code === err.PERMISSION_DENIED
+          ? "Location permission denied. Enable it to use your GPS position."
+          : "Couldn't get a location fix. Try again outdoors.";
+        showBanner("conv-banner", msg);
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -428,6 +448,7 @@
   $("zone-auto").addEventListener("change", updateZoneUI);
 
   $("convert-btn").addEventListener("click", runConvert);
+  $("loc-btn").addEventListener("click", useCurrentLocation);
   $("clear-btn").addEventListener("click", clearConvert);
   $("maps-btn").addEventListener("click", (e) => {
     if (!lastWgs) e.preventDefault();
@@ -442,18 +463,14 @@
   $("dms-btn").addEventListener("click", runDms);
   $("dms-clear").addEventListener("click", clearDms);
   $("dms-copy").addEventListener("click", () => {
-    if (lastDms) copyText(lastDms.lat.toFixed(8) + ", " + lastDms.lon.toFixed(8));
-    else if (isFinite(parseDms($("dms-lat").value)))
-      copyText($("r-dms-lat").textContent.replace("°", ""));
+    if (lastDms != null) copyText(fmt(lastDms, 6));
   });
 
   // Enter key submits the relevant panel
   ["easting", "northing", "wlat", "wlon", "zone-num"].forEach((id) =>
     $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") runConvert(); })
   );
-  ["dms-lat", "dms-lon"].forEach((id) =>
-    $(id).addEventListener("keydown", (e) => { if (e.key === "Enter") runDms(); })
-  );
+  $("dms-in").addEventListener("keydown", (e) => { if (e.key === "Enter") runDms(); });
 
   syncDirInputs();
 })();
