@@ -7,7 +7,7 @@
  *
  * Bump CACHE_VERSION whenever the shell changes to roll out an update.
  */
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2";
 const CACHE_NAME = `smartsurveyor-${CACHE_VERSION}`;
 
 // Core app shell — cached up-front so the landing page works fully offline.
@@ -22,6 +22,7 @@ const CORE_ASSETS = [
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",
   "./assets/icons/apple-touch-icon.png",
+  "./assets/img/creator.jpg",
 ];
 
 self.addEventListener("install", (event) => {
