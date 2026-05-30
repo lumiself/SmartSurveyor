@@ -104,6 +104,7 @@
   /* ---------- state ---------- */
   let heading = null;       // device compass heading (deg), or null
   let compassOn = false;
+  let gotReading = false;   // have we received at least one orientation event?
 
   /* ---------- persistence ---------- */
   const STORE = "ss-navigator";
@@ -241,11 +242,28 @@
     );
   }
 
+  // Current screen rotation (deg). deviceorientation alpha is reported relative
+  // to the device's natural orientation, so we add this back to keep the arrow
+  // correct when the phone is rotated to landscape.
+  function screenAngle() {
+    if (screen.orientation && screen.orientation.angle != null) return screen.orientation.angle;
+    if (window.orientation != null) return window.orientation;
+    return 0;
+  }
+
   function onOrient(e) {
     let h = null;
-    if (e.webkitCompassHeading != null) h = e.webkitCompassHeading;       // iOS
-    else if (e.absolute && e.alpha != null) h = (360 - e.alpha) % 360;    // others
-    if (h != null) { heading = h; if (currentMode() === "navigate") updateNavigate(); }
+    if (e.webkitCompassHeading != null) {
+      h = e.webkitCompassHeading;                          // iOS: already a true heading
+    } else if (e.alpha != null) {
+      // Android/others. Treat alpha as a compass heading; absolute when the
+      // event provides it, best-effort otherwise (still tracks turning).
+      h = (360 - e.alpha + screenAngle()) % 360;
+    }
+    if (h == null || isNaN(h)) return;
+    heading = (h + 360) % 360;
+    gotReading = true;
+    if (currentMode() === "navigate") updateNavigate();
   }
 
   function enableCompass() {
@@ -253,16 +271,27 @@
       window.addEventListener("deviceorientationabsolute", onOrient, true);
       window.addEventListener("deviceorientation", onOrient, true);
       compassOn = true;
+      gotReading = false;
       $("nav-compass-btn").textContent = "Compass on";
       $("nav-compass-btn").disabled = true;
+      updateNavigate();
+      // If no sensor event arrives shortly, the device has no magnetometer
+      // (or blocked it) — tell the user instead of leaving a frozen arrow.
+      setTimeout(function () {
+        if (compassOn && !gotReading) {
+          status("No compass readings — this device may lack a magnetometer. Arrow stays grid-north up.");
+        }
+      }, 1500);
     }
     if (typeof DeviceOrientationEvent !== "undefined" &&
       typeof DeviceOrientationEvent.requestPermission === "function") {
       DeviceOrientationEvent.requestPermission()
         .then((s) => { if (s === "granted") start(); else status("Compass permission denied."); })
         .catch(() => status("Compass unavailable."));
-    } else {
+    } else if (typeof DeviceOrientationEvent !== "undefined") {
       start();
+    } else {
+      status("This device/browser doesn't expose orientation sensors.");
     }
   }
 
