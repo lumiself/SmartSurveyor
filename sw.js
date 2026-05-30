@@ -7,7 +7,7 @@
  *
  * Bump CACHE_VERSION whenever the shell changes to roll out an update.
  */
-const CACHE_VERSION = "v7";
+const CACHE_VERSION = "v8";
 const CACHE_NAME = `smartsurveyor-${CACHE_VERSION}`;
 
 // Cross-origin runtime deps we deliberately cache (cache-first) so a tool's
@@ -24,6 +24,8 @@ const RUNTIME_DEPS = [
 // offline, and so that bumping CACHE_VERSION atomically replaces ALL files
 // (including tool JS) rather than leaving stale tool scripts in a lazy cache.
 const CORE_ASSETS = [
+  "./tools/navigator/index.html",
+  "./tools/navigator/navigator.js",
   "./",
   "./index.html",
   "./manifest.webmanifest",

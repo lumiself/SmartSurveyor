@@ -14,6 +14,16 @@
  */
 window.SMARTSURVEYOR_TOOLS = [
   {
+    slug: "navigator",
+    name: "Navigator",
+    tagline: "Arrow & distance \u00b7 station setup",
+    description: "Point-to-point arrow direction and remaining distance in Nahrwan 1967 / UTM, plus total station orientation: grid azimuth and tilt from an occupied point to a reference backsight. Works offline.",
+    href: "tools/navigator/",
+    status: "ready",
+    tags: ["navigation", "bearing", "distance", "total station", "azimuth", "nahrwan", "utm"],
+    icon: "M12 2 4 21l8-3.4L20 21 12 2z"
+  },
+  {
     slug: "gnss-planner",
     name: "GNSS Planner",
     tagline: "Live satellites · sky plot · DOP",
