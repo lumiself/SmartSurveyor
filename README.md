@@ -100,4 +100,4 @@ python3 -m http.server 8000
 
 ---
 
-Built and maintained by **[ Your Name ]** · [LinkedIn](https://www.linkedin.com/in/your-handle)
+Built and maintained by **Dereck Dube** · [LinkedIn](https://www.linkedin.com/in/dereck-khaya-dube)
