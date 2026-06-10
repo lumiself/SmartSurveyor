@@ -105,6 +105,7 @@
   let heading = null;       // device compass heading (deg), or null
   let compassOn = false;
   let gotReading = false;   // have we received at least one orientation event?
+  let watchId = null;       // geolocation watchPosition id while tracking live
 
   /* ---------- persistence ---------- */
   const STORE = "ss-navigator";
@@ -216,27 +217,37 @@
   /* ---------- device sensors ---------- */
   function status(msg) { $("nav-msg").textContent = msg || ""; }
 
+  // Write a GPS fix into the From point and refresh the readout.
+  function applyFix(p) {
+    const zone = parseInt($("nav-zone").value, 10) || 40;
+    const u = wgs84ToNahrwanUtm(p.coords.latitude, p.coords.longitude, zone);
+    $("nav-from-e").value = u.E.toFixed(2);
+    $("nav-from-n").value = u.N.toFixed(2);
+    if (p.coords.altitude != null && isFinite(p.coords.altitude)) {
+      $("nav-from-h").value = p.coords.altitude.toFixed(2);
+    }
+    const acc = p.coords.accuracy != null ? " (±" + Math.round(p.coords.accuracy) + " m)" : "";
+    status("Tracking – zone " + zone + "N" + acc);
+    recompute();
+  }
+
+  function stopGps() {
+    if (watchId != null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+    $("nav-gps").textContent = "Use GPS";
+  }
+
+  // Toggle live tracking: watchPosition keeps the From point updating as you
+  // move, so distance and the arrow stay current. Tap again to stop.
   function useGps() {
     if (!navigator.geolocation) { status("Geolocation not supported on this device."); return; }
+    if (watchId != null) { stopGps(); status("Tracking stopped."); return; }
     status("Locating…");
-    $("nav-gps").disabled = true;
-    navigator.geolocation.getCurrentPosition(
-      (p) => {
-        const zone = parseInt($("nav-zone").value, 10) || 40;
-        const u = wgs84ToNahrwanUtm(p.coords.latitude, p.coords.longitude, zone);
-        $("nav-from-e").value = u.E.toFixed(2);
-        $("nav-from-n").value = u.N.toFixed(2);
-        if (p.coords.altitude != null && isFinite(p.coords.altitude)) {
-          $("nav-from-h").value = p.coords.altitude.toFixed(2);
-        }
-        const acc = p.coords.accuracy != null ? " (±" + Math.round(p.coords.accuracy) + " m)" : "";
-        status("Position set from GPS – zone " + zone + "N" + acc);
-        $("nav-gps").disabled = false;
-        recompute();
-      },
+    $("nav-gps").textContent = "Stop GPS";
+    watchId = navigator.geolocation.watchPosition(
+      applyFix,
       (err) => {
         status("GPS error: " + err.message);
-        $("nav-gps").disabled = false;
+        stopGps();
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
