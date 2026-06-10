@@ -514,10 +514,6 @@
   $("share-btn").addEventListener("click", () => {
     if (lastWgs) shareLocation(lastWgs.lat, lastWgs.lon, "WGS84");
   });
-  $("copy-btn").addEventListener("click", () => {
-    if (lastWgs) copyText(lastWgs.lat.toFixed(8) + ", " + lastWgs.lon.toFixed(8));
-  });
-
   document.querySelectorAll('input[name="dmsdir"]').forEach((r) =>
     r.addEventListener("change", syncDmsDir)
   );
