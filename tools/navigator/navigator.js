@@ -15,7 +15,9 @@
   }
   const WGS84 = ellipsoid(6378137.0, 298.257223563);
   const CLARKE = ellipsoid(6378249.145, 293.465); // Clarke 1880 (RGS)
-  const DX = -249, DY = -156, DZ = 381;           // Nahrwan -> WGS84
+  const DX = -249, DY = -156, DZ = 381;            // Zone 39 (EPSG:1191)
+  const AS = Math.PI / (180 * 3600);
+  const SH40 = { dx: -225.4, dy: -158.7, dz: 380.8, rx: 0, ry: 0, rz: 0.814 * AS, s: -0.38e-6 };
 
   function geoToEcef(latDeg, lonDeg, h, el) {
     const phi = latDeg * D2R, lam = lonDeg * D2R;
@@ -66,8 +68,18 @@
 
   function wgs84ToNahrwanUtm(latDeg, lonDeg, zone) {
     const ecef = geoToEcef(latDeg, lonDeg, 0, WGS84);
-    ecef.x -= DX; ecef.y -= DY; ecef.z -= DZ; // WGS84 -> Nahrwan
-    const g = ecefToGeo(ecef, CLARKE);
+    let nahEcef;
+    if (zone === 40) {
+      const s = SH40.s;
+      nahEcef = {
+        x: -SH40.dx + (1 - s) * ecef.x + SH40.rz * ecef.y - SH40.ry * ecef.z,
+        y: -SH40.dy - SH40.rz * ecef.x + (1 - s) * ecef.y + SH40.rx * ecef.z,
+        z: -SH40.dz + SH40.ry * ecef.x - SH40.rx * ecef.y + (1 - s) * ecef.z
+      };
+    } else {
+      nahEcef = { x: ecef.x - DX, y: ecef.y - DY, z: ecef.z - DZ };
+    }
+    const g = ecefToGeo(nahEcef, CLARKE);
     return geoToUtm(g.lat, g.lon, CLARKE, zone);
   }
 

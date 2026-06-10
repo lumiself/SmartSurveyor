@@ -33,10 +33,29 @@
   // Standard UTM zone for a WGS84 longitude (UAE falls in 39 or 40).
   function autoZone(lonDeg) { return Math.floor((lonDeg + 180) / 6) + 1; }
 
-  // 3-parameter datum shift, Nahrwan 1967 → WGS84 (UAE)
+  // Zone 39 (Abu Dhabi): 3-parameter shift, EPSG:1191
   const DX = -249, DY = -156, DZ = 381;
+  // Zone 40 (Dubai / NE UAE): 7-parameter Helmert, EPSG:15938
+  const AS = Math.PI / (180 * 3600); // arc-second → radians
+  const SH40 = { dx: -225.4, dy: -158.7, dz: 380.8, rx: 0, ry: 0, rz: 0.814 * AS, s: -0.38e-6 };
 
   const D2R = Math.PI / 180, R2D = 180 / Math.PI;
+
+  // ---- 7-parameter Helmert (Position Vector convention, EPSG) ---------------
+  function helmert7(p, h) {
+    return {
+      x: h.dx + (1 + h.s) * p.x - h.rz * p.y + h.ry * p.z,
+      y: h.dy + h.rz * p.x + (1 + h.s) * p.y - h.rx * p.z,
+      z: h.dz - h.ry * p.x + h.rx * p.y + (1 + h.s) * p.z
+    };
+  }
+  function helmert7inv(p, h) {
+    return {
+      x: -h.dx + (1 - h.s) * p.x + h.rz * p.y - h.ry * p.z,
+      y: -h.dy - h.rz * p.x + (1 - h.s) * p.y + h.rx * p.z,
+      z: -h.dz + h.ry * p.x - h.rx * p.y + (1 - h.s) * p.z
+    };
+  }
 
   // ---- geographic → geocentric (ECEF) ---------------------------------------
   function geoToEcef(latDeg, lonDeg, h, el) {
@@ -141,15 +160,19 @@
   function nahrwanUtmToWgs84(E, Nn, zone) {
     const nah = utmToGeo(E, Nn, CLARKE, zone);
     const ecef = geoToEcef(nah.lat, nah.lon, 0, CLARKE);
-    ecef.x += DX; ecef.y += DY; ecef.z += DZ; // Nahrwan → WGS84
-    const wgs = ecefToGeo(ecef, WGS84);
+    const wgsEcef = zone === 40
+      ? helmert7(ecef, SH40)                                    // EPSG:15938
+      : { x: ecef.x + DX, y: ecef.y + DY, z: ecef.z + DZ };  // EPSG:1191
+    const wgs = ecefToGeo(wgsEcef, WGS84);
     return { wgs: wgs, nah: nah };
   }
 
   function wgs84ToNahrwanUtm(latDeg, lonDeg, zone) {
     const ecef = geoToEcef(latDeg, lonDeg, 0, WGS84);
-    ecef.x -= DX; ecef.y -= DY; ecef.z -= DZ; // WGS84 → Nahrwan
-    const nah = ecefToGeo(ecef, CLARKE);
+    const nahEcef = zone === 40
+      ? helmert7inv(ecef, SH40)                                  // EPSG:15938
+      : { x: ecef.x - DX, y: ecef.y - DY, z: ecef.z - DZ };   // EPSG:1191
+    const nah = ecefToGeo(nahEcef, CLARKE);
     const utm = geoToUtm(nah.lat, nah.lon, CLARKE, zone);
     return { utm: utm, nah: nah, wgs: { lat: latDeg, lon: lonDeg } };
   }
@@ -491,10 +514,6 @@
   $("share-btn").addEventListener("click", () => {
     if (lastWgs) shareLocation(lastWgs.lat, lastWgs.lon, "WGS84");
   });
-  $("copy-btn").addEventListener("click", () => {
-    if (lastWgs) copyText(lastWgs.lat.toFixed(8) + ", " + lastWgs.lon.toFixed(8));
-  });
-
   document.querySelectorAll('input[name="dmsdir"]').forEach((r) =>
     r.addEventListener("change", syncDmsDir)
   );
